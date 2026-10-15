@@ -30,8 +30,7 @@ button,.jspsych-btn { background:#fff!important; color:#000!important; border:1p
 .pair-option { width:100%; }
 .keyboard-reminder { position:fixed; bottom:20px; left:0; right:0; text-align:center; font-size:14px; font-weight:400; color:#777; pointer-events:none; padding:0 12px; }
 .word-label { font-size:42px; white-space:nowrap; color:#000!important; }
-.practice-question { position:fixed; top:12vh; left:50%; transform:translateX(-50%); width:min(1000px, calc(100vw - 48px)); font-size:24px; line-height:1.35; margin:0; text-align:center; color:#000!important; }
-.consent-option { font-weight:700!important; }
+.practice-question { font-size:24px; margin-bottom:30px; color:#000!important; }
 .word-position { position:relative; }
 .fixation-placeholder { visibility:hidden; }
 .fixation-cross { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:42px; font-weight:400; color:#000!important; }
@@ -209,7 +208,9 @@ function randomizePairSides(pair) {
 
 
 // SHARED PAIR TRIAL
-// Both phases display the question above the word positions, including during fixation.
+// Both phases use the same display and response logic. Only practice trials
+// show the reminder question and keyboard instructions above the pair. 
+// Shared wording for practice trials and the final actual-test reminder.
 const taskQuestion = 'Which personality adjective below is more desirable in someone applying for the Customer Service Representative job?';
 
 function makeTrial(item, taskLabel, isPractice) {
@@ -220,8 +221,10 @@ function makeTrial(item, taskLabel, isPractice) {
 
     // S always selects the displayed LEFT word; K selects the displayed RIGHT word.
     stimulus: `
-      <div class="practice-question">${taskQuestion}</div>
       <div class="trial-wrapper"><div class="trial-content">
+        ${isPractice ? `
+        <div class="practice-question">${taskQuestion}</div>
+        ` : ``}
 
 
         <div class="pair-row">
@@ -274,8 +277,8 @@ function makeFixation(item, isPractice) {
   return {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
-      <div class="practice-question">${taskQuestion}</div>
       <div class="trial-wrapper"><div class="trial-content">
+        ${isPractice ? `<div class="practice-question">${taskQuestion}</div>` : ``}
         <div class="pair-row">
           <div class="pair-option word-position">
             <div class="word-label fixation-placeholder" aria-hidden="true">${escapeHtml(item.display_left)}</div>
@@ -417,12 +420,12 @@ timeline.push({
 
       <label class="option-line">
         <input type="radio" name="consent" value="agree" required>
-        <strong class="consent-option" style="font-weight:700!important;">I Consent</strong>
+        <strong>I Conscent</strong>
       </label>
 
       <label class="option-line">
         <input type="radio" name="consent" value="decline">
-        <strong class="consent-option" style="font-weight:700!important;">I Do Not Consent</strong>
+        <strong> I Do Not Conscent </strong>
       </label>
 
     </div>
@@ -560,7 +563,7 @@ timeline.push({
 timeline.push({
   type: jsPsychSurveyHtmlForm,
   data: { task: "imc_question" },
-  html: `<div class="form-box"><div class="form-title">DATA QUALITY CHECKS</div><div class="question-block"><div class="question-title">1. Instructional manipulation check</div><p>Please mark the option below that best describes your choices of attributes:</p><p>I compared each attribute pair with respect to how desirable it would be to be possessed by an applicant for the job of:</p>
+  html: `<div class="form-box"><div class="question-block"><div class="question-title">Instructional manipulation check</div><p>Please mark the option below that best describes your choices of attributes:</p><p>I compared each attribute pair with respect to how desirable it would be to be possessed by an applicant for the job of:</p>
   <label class="option-line"><input type="radio" name="imc" value="1" required> High School Teacher</label>
   <label class="option-line"><input type="radio" name="imc" value="2"> Firefighter</label>
   <label class="option-line"><input type="radio" name="imc" value="3"> Data Analyst</label>
@@ -575,7 +578,7 @@ timeline.push({
 timeline.push({
   type: jsPsychSurveyHtmlForm,
   data: { task: "english_question" },
-  html: `<div class="form-box"><div class="form-title">DATA QUALITY CHECKS</div><div class="question-block"><div class="question-title">2. English proficiency self-report</div><p>How would you rate your proficiency in understanding written English?</p>
+  html: `<div class="form-box"><div class="question-block"><div class="question-title">English proficiency self-report</div><p>How would you rate your proficiency in understanding written English?</p>
   <label class="option-line"><input type="radio" name="english" value="1" required> Low</label>
   <label class="option-line"><input type="radio" name="english" value="2"> Moderate</label>
   <label class="option-line"><input type="radio" name="english" value="3"> High</label></div></div>`,
@@ -588,7 +591,7 @@ timeline.push({
 timeline.push({
   type: jsPsychSurveyHtmlForm,
   data: { task: "careless_question" },
-  html: `<div class="form-box"><div class="form-title">DATA QUALITY CHECKS</div><div class="question-block"><div class="question-title">3. Self-report measure of careless/insufficient effort responding</div><p Results of our study will depend a lot on the quality of your responses. Is there any reason we should exclude your responses from our data analysis (e.g., you were being distracted while choosing the attributes; your computer was malfunctioning while completing the questionnaire; you did not put forth an effort in identifying more desirable attributes; you were selecting attributes at random, you were using AI to assist you with responses, etc….)?
+  html: `<div class="form-box"><div class="question-block"><div class="question-title">Self-report measure of careless/insufficient effort responding</div><p Results of our study will depend a lot on the quality of your responses. Is there any reason we should exclude your responses from our data analysis (e.g., you were being distracted while choosing the attributes; your computer was malfunctioning while completing the questionnaire; you did not put forth an effort in identifying more desirable attributes; you were selecting attributes at random, you were using AI to assist you with responses, etc….)?
 (You will receive 2 credits for this study no matter how you respond to this question)</p>
   <label class="option-line"><input type="radio" name="careless" value="1" required> Yes – my responses SHOULD be thrown out</label>
   <label class="option-line"><input type="radio" name="careless" value="2"> No – my survey responses SHOULD NOT be thrown out</label></div></div>`,
