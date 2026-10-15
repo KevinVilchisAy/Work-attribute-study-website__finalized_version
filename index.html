@@ -30,7 +30,8 @@ button,.jspsych-btn { background:#fff!important; color:#000!important; border:1p
 .pair-option { width:100%; }
 .keyboard-reminder { position:fixed; bottom:20px; left:0; right:0; text-align:center; font-size:14px; font-weight:400; color:#777; pointer-events:none; padding:0 12px; }
 .word-label { font-size:42px; white-space:nowrap; color:#000!important; }
-.practice-question { font-size:24px; margin-bottom:30px; color:#000!important; }
+.practice-question { position:fixed; top:12vh; left:50%; transform:translateX(-50%); width:min(1000px, calc(100vw - 48px)); font-size:24px; line-height:1.35; margin:0; text-align:center; color:#000!important; }
+.consent-option { font-weight:700!important; }
 .word-position { position:relative; }
 .fixation-placeholder { visibility:hidden; }
 .fixation-cross { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:42px; font-weight:400; color:#000!important; }
@@ -147,17 +148,17 @@ var jsPsych = initJsPsych({
         };
       }),
       // Original follow-up answers only, including optional self-description fields.
-      imc: getSurveyValue("imc_question", "imc"),
-      english: getSurveyValue("english_question", "english"),
-      careless: getSurveyValue("careless_question", "careless"),
-      age: getSurveyValue("age_question", "age"),
-      gender: getSurveyValue("gender_question", "gender"),
-      gender_text: getSurveyValue("gender_question", "gender_text"),
-      year_school: getSurveyValue("year_school_question", "year_school"),
-      year_school_text: getSurveyValue("year_school_question", "year_school_text"),
-      ethnicity: getSurveyValue("ethnicity_question", "ethnicity"),
-      ethnicity_text: getSurveyValue("ethnicity_question", "ethnicity_text"),
-      hispanic: getSurveyValue("hispanic_question", "hispanic")
+      imc: getSurveyValue("followup_questionnaire", "imc"),
+      english: getSurveyValue("followup_questionnaire", "english"),
+      careless: getSurveyValue("followup_questionnaire", "careless"),
+      age: getSurveyValue("followup_questionnaire", "age"),
+      gender: getSurveyValue("followup_questionnaire", "gender"),
+      gender_text: getSurveyValue("followup_questionnaire", "gender_text"),
+      year_school: getSurveyValue("followup_questionnaire", "year_school"),
+      year_school_text: getSurveyValue("followup_questionnaire", "year_school_text"),
+      ethnicity: getSurveyValue("followup_questionnaire", "ethnicity"),
+      ethnicity_text: getSurveyValue("followup_questionnaire", "ethnicity_text"),
+      hispanic: getSurveyValue("followup_questionnaire", "hispanic")
     };
 
     window.location.href = return_url + "#data=" + encodeURIComponent(JSON.stringify(payload));
@@ -198,9 +199,7 @@ function randomizePairSides(pair) {
 
 
 // SHARED PAIR TRIAL
-// Both phases use the same display and response logic. Only practice trials
-// show the reminder question and keyboard instructions above the pair. 
-// Shared wording for practice trials and the final actual-test reminder.
+// Both phases show the question near the top and the response reminder at the bottom.
 const taskQuestion = 'Which personality adjective below is more desirable in someone applying for the Customer Service Representative job?';
 
 function makeTrial(item, taskLabel, isPractice) {
@@ -211,10 +210,8 @@ function makeTrial(item, taskLabel, isPractice) {
 
     // S always selects the displayed LEFT word; K selects the displayed RIGHT word.
     stimulus: `
+      <div class="practice-question">${taskQuestion}</div>
       <div class="trial-wrapper"><div class="trial-content">
-        ${isPractice ? `
-        <div class="practice-question">${taskQuestion}</div>
-        ` : ``}
 
 
         <div class="pair-row">
@@ -267,8 +264,8 @@ function makeFixation(item, isPractice) {
   return {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
+      <div class="practice-question">${taskQuestion}</div>
       <div class="trial-wrapper"><div class="trial-content">
-        ${isPractice ? `<div class="practice-question">${taskQuestion}</div>` : ``}
         <div class="pair-row">
           <div class="pair-option word-position">
             <div class="word-label fixation-placeholder" aria-hidden="true">${escapeHtml(item.display_left)}</div>
@@ -410,12 +407,12 @@ timeline.push({
 
       <label class="option-line">
         <input type="radio" name="consent" value="agree" required>
-        <strong>I Conscent</strong>
+        <strong class="consent-option" style="font-weight:700!important;">I Consent</strong>
       </label>
 
       <label class="option-line">
         <input type="radio" name="consent" value="decline">
-        <strong> I Do Not Conscent </strong>
+        <strong class="consent-option" style="font-weight:700!important;">I Do Not Consent</strong>
       </label>
 
     </div>
@@ -545,121 +542,57 @@ timeline.push({
   button_label_next: "Proceed"
 });
 
-// Original data-quality and demographic questions, restored with their original wording.
-//Second Test Questions
-
-
-//Question 1
+// All follow-up and demographic questions share one page.
 timeline.push({
   type: jsPsychSurveyHtmlForm,
-  data: { task: "imc_question" },
-  html: `<div class="form-box"><div class="question-block"><div class="question-title">Instructional manipulation check</div><p>Please mark the option below that best describes your choices of attributes:</p><p>I compared each attribute pair with respect to how desirable it would be to be possessed by an applicant for the job of:</p>
+  data: { task: "followup_questionnaire" },
+  html: `<div class="form-box" style="padding-left:20px;padding-right:20px;">
+    <div class="form-title">FOLLOW-UP QUESTIONNAIRE</div>
+<div class="question-block"><p>Please mark the option below that best describes your choices of attributes:</p><p>I compared each attribute pair with respect to how desirable it would be to be possessed by an applicant for the job of:</p>
   <label class="option-line"><input type="radio" name="imc" value="1" required> High School Teacher</label>
   <label class="option-line"><input type="radio" name="imc" value="2"> Firefighter</label>
   <label class="option-line"><input type="radio" name="imc" value="3"> Data Analyst</label>
   <label class="option-line"><input type="radio" name="imc" value="4"> Customer Service Representative</label>
-  <label class="option-line"><input type="radio" name="imc" value="5"> Sales Representative</label></div></div>`,
-  button_label: "Next",
-  on_finish: parseSurveyResponse
-});
-
-
-//Question 2
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  data: { task: "english_question" },
-  html: `<div class="form-box"><div class="question-block"><div class="question-title">English proficiency self-report</div><p>How would you rate your proficiency in understanding written English?</p>
+  <label class="option-line"><input type="radio" name="imc" value="5"> Sales Representative</label></div>
+<div class="question-block"><p>How would you rate your proficiency in understanding written English?</p>
   <label class="option-line"><input type="radio" name="english" value="1" required> Low</label>
   <label class="option-line"><input type="radio" name="english" value="2"> Moderate</label>
-  <label class="option-line"><input type="radio" name="english" value="3"> High</label></div></div>`,
-  button_label: "Next",
-  on_finish: parseSurveyResponse
-});
-
-
-//Question 3
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  data: { task: "careless_question" },
-  html: `<div class="form-box"><div class="question-block"><div class="question-title">Self-report measure of careless/insufficient effort responding</div><p Results of our study will depend a lot on the quality of your responses. Is there any reason we should exclude your responses from our data analysis (e.g., you were being distracted while choosing the attributes; your computer was malfunctioning while completing the questionnaire; you did not put forth an effort in identifying more desirable attributes; you were selecting attributes at random, you were using AI to assist you with responses, etc….)?
+  <label class="option-line"><input type="radio" name="english" value="3"> High</label></div>
+<div class="question-block"><p>Results of our study will depend a lot on the quality of your responses. Is there any reason we should exclude your responses from our data analysis (e.g., you were being distracted while choosing the attributes; your computer was malfunctioning while completing the questionnaire; you did not put forth an effort in identifying more desirable attributes; you were selecting attributes at random, you were using AI to assist you with responses, etc….)?
 (You will receive 2 credits for this study no matter how you respond to this question)</p>
   <label class="option-line"><input type="radio" name="careless" value="1" required> Yes – my responses SHOULD be thrown out</label>
-  <label class="option-line"><input type="radio" name="careless" value="2"> No – my survey responses SHOULD NOT be thrown out</label></div></div>`,
-  button_label: "Next",
-  on_finish: parseSurveyResponse
-});
-
-
-//Question 4 Title
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  data: { task: "age_question" },
-  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">How old are you?</div><input class="text-input" type="number" name="age" min="18" max="99" required></div></div>`,
-  button_label: "Next",
-  on_finish: parseSurveyResponse
-});
-
-//Question 4
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  data: { task: "gender_question" },
-  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">How do you describe yourself?</div>
+  <label class="option-line"><input type="radio" name="careless" value="2"> No – my survey responses SHOULD NOT be thrown out</label></div>
+<h2>DEMOGRAPHIC QUESTIONS</h2>
+<div class="question-block"><div class="question-title">How old are you?</div><input class="text-input" type="number" name="age" min="18" max="99" required></div>
+<div class="question-block"><div class="question-title">How do you describe yourself?</div>
   <label class="option-line"><input type="radio" name="gender" value="1" required> Male</label>
   <label class="option-line"><input type="radio" name="gender" value="2"> Female</label>
   <label class="option-line"><input type="radio" name="gender" value="3"> Non-binary</label>
   <label class="option-line"><input type="radio" name="gender" value="4"> Prefer to self-describe</label><input class="text-input" type="text" name="gender_text" placeholder="Optional self-description">
-  <label class="option-line"><input type="radio" name="gender" value="5"> Prefer not to say</label></div></div>`,
-  button_label: "Next",
-  on_finish: parseSurveyResponse
-});
-
-
-//Question 5
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  data: { task: "year_school_question" },
-  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">What year of school are you in?</div>
+  <label class="option-line"><input type="radio" name="gender" value="5"> Prefer not to say</label></div>
+<div class="question-block"><div class="question-title">What year of school are you in?</div>
   <label class="option-line"><input type="radio" name="year_school" value="1" required> Freshman</label>
   <label class="option-line"><input type="radio" name="year_school" value="2"> Sophomore</label>
   <label class="option-line"><input type="radio" name="year_school" value="3"> Junior</label>
   <label class="option-line"><input type="radio" name="year_school" value="4"> Senior</label>
   <label class="option-line"><input type="radio" name="year_school" value="5"> Prefer to self-describe</label><input class="text-input" type="text" name="year_school_text" placeholder="Optional self-description">
-  <label class="option-line"><input type="radio" name="year_school" value="6"> Prefer not to say</label></div></div>`,
-  button_label: "Next",
-  on_finish: parseSurveyResponse
-});
-
-
-//Question 6
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  data: { task: "ethnicity_question" },
-  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">What best describes your race?</div>
+  <label class="option-line"><input type="radio" name="year_school" value="6"> Prefer not to say</label></div>
+<div class="question-block"><div class="question-title">What best describes your race?</div>
   <label class="option-line"><input type="radio" name="ethnicity" value="1" required> American Indian / Alaskan Indian</label>
   <label class="option-line"><input type="radio" name="ethnicity" value="2"> Native Hawaiian or Other Pacific Islander</label>
   <label class="option-line"><input type="radio" name="ethnicity" value="3"> Black / African American</label>
    <label class="option-line"><input type="radio" name="ethnicity" value="3"> Asian</label>
   <label class="option-line"><input type="radio" name="ethnicity" value="4"> White / Caucasian</label>
   <label class="option-line"><input type="radio" name="ethnicity" value="5"> Prefer to self-describe</label><input class="text-input" type="text" name="ethnicity_text" placeholder="Optional self-description">
-  <label class="option-line"><input type="radio" name="ethnicity" value="6"> Prefer not to say</label></div></div>`,
-  button_label: "Next",
-  on_finish: parseSurveyResponse
-});
-
-
-//Question 7
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  data: { task: "hispanic_question" },
-  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">Are you Hispanic or Latino?</div>
+  <label class="option-line"><input type="radio" name="ethnicity" value="6"> Prefer not to say</label></div>
+<div class="question-block"><div class="question-title">Are you Hispanic or Latino?</div>
   <label class="option-line"><input type="radio" name="hispanic" value="1" required> Yes</label>
   <label class="option-line"><input type="radio" name="hispanic" value="2"> No</label>
-  <label class="option-line"><input type="radio" name="hispanic" value="3"> Prefer not to say</label></div></div>`,
-  button_label: "FINISH",
+  <label class="option-line"><input type="radio" name="hispanic" value="3"> Prefer not to say</label></div>
+  </div>`,
+  button_label: "Continue",
   on_finish: parseSurveyResponse
 });
-
-
 
 // Submit identity, actual-test choices/times, and follow-up answers.
 // The duplicate end-of-study SONA prompt is intentionally omitted.
