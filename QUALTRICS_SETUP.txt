@@ -1,0 +1,58 @@
+REDUCED WEBSITE RESULTS — QUALTRICS HANDOFF
+
+The website still redirects to your existing Qualtrics URL with #data= followed
+by URL-encoded JSON. A redirect alone does not save these values: the Qualtrics
+receiving JavaScript must parse the fragment and store the requested fields.
+That receiving code was not supplied, so its compatibility is not verified.
+
+The payload contains participant identity, actual-test choices/times, and
+the original follow-up answers. The identity/trial portion is:
+{
+  "sona_id": "example-code",
+  "first_name": "Example",
+  "last_name": "Participant",
+  "trials": [
+    { "rt": 824, "chosen_standardized": "Agreeable" },
+    { "rt": 1037, "chosen_standardized": "Calm" }
+  ]
+}
+
+rt is milliseconds from pair appearance to S/K response, excluding fixation.
+chosen_standardized is the word selected, regardless of its displayed side.
+trials contains only actual-test trials, in presentation order. Because whole
+pairs are shuffled, array position is NOT a stable pair ID across participants.
+Pair IDs have been omitted as requested.
+
+Follow-up fields at the top level of the same payload:
+imc, english, careless, age, gender, gender_text, year_school, year_school_text, ethnicity, ethnicity_text, hispanic.
+These retain their original question option codes and optional text answers.
+
+Update the existing Qualtrics receiver to read sona_id, first_name, last_name,
+trials, and the follow-up fields listed above. Remove old dependencies on completed, n_main_trials, duplicate
+SONA fields, conditions, key_pressed, pair_id, scoring flags. Keep the follow-up field mappings.
+The number of responses is available as payload.trials.length if needed by
+receiving logic; it need not be saved as an extra field.
+Do not publish the new HTML until the receiver is compatible.
+
+QUALTRICS IP ADDRESS COLLECTION
+In Qualtrics, go to Survey options > Security and turn on Anonymize responses,
+then publish the survey settings. This suppresses IP/location collection for
+future responses, but it does not remove names or SONA codes explicitly sent
+as survey/embedded data. Existing responses are not retroactively anonymized.
+Qualtrics may retain system metadata such as Response ID and timestamps;
+reducing the website payload does not remove all Qualtrics system columns.
+Official documentation:
+https://www.qualtrics.com/support/survey-platform/survey-module/survey-options/survey-protection/
+
+WEBSITE CHANGES
+First/last name fields added alongside SONA code. Typed SONA code is the saved
+ID (URL code is a fallback). Practice remains excluded. Consent wording now
+states responses are identifiable. Original demographic/data-quality questions and their answer fields are
+restored. The duplicate end-of-study SONA prompt remains removed. Declining consent
+does not send results to Qualtrics. Within-pair randomization and the actual-
+test reminder are preserved.
+
+VERIFICATION
+Local checks cover payload fields, practice exclusion, response-time units,
+word selection, identity trimming, and the consent-decline export guard.
+A real Qualtrics submission must still be checked with your receiving code.

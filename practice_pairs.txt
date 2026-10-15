@@ -1,0 +1,23 @@
+[
+  {
+    "pair_id": "P1",
+    "word1": "Kind",
+    "word2": "Reckless",
+    "condition": "practice",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": "P2",
+    "word1": "Caring",
+    "word2": "Thorough",
+    "condition": "practice",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": "P3",
+    "word1": "Harsh",
+    "word2": "Careless",
+    "condition": "practice",
+    "more_desirable": ""
+  }
+]

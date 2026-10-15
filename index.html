@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desirable Attributes at Work</title>
+
+<script src="https://unpkg.com/jspsych@8.2.2"></script>
+<link href="https://unpkg.com/jspsych@8.2.2/css/jspsych.css" rel="stylesheet">
+
+<script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@2.1.0"></script>
+<script src="https://unpkg.com/@jspsych/plugin-instructions@2.1.0"></script>
+<script src="https://unpkg.com/@jspsych/plugin-survey-html-form@2.1.0"></script>
+
+<style>
+html, body { margin:0!important; padding:0!important; background:#fff!important; color:#000!important; font-family:Arial,sans-serif; }
+.jspsych-display-element,.jspsych-content-wrapper,.jspsych-content { background:#fff!important; color:#000!important; }
+.jspsych-content { max-width:100%!important; }
+button,.jspsych-btn { background:#fff!important; color:#000!important; border:1px solid #000!important; padding:8px 18px!important; font-size:16px!important; }
+.instructions-box,.debrief-box,.form-box { max-width:800px; margin:40px auto; text-align:left; color:#000; line-height:1.35; font-size:17px; border-top:1px solid #000; padding-top:24px; }
+.instructions-title,.debrief-title,.form-title { text-align:center; font-weight:bold; font-size:28px; margin-bottom:28px; }
+.job-box { border:1px solid #000; padding:14px; margin:24px 0; font-style:italic; }
+.job-title,.question-title { font-weight:bold; margin-bottom:10px; }
+.question-block { margin-bottom:28px; }
+.option-line { display:block; margin:8px 0; }
+.text-input { width:320px; padding:6px; border:1px solid #000; font-size:16px; }
+.trial-wrapper { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:1000px; text-align:center; }
+.trial-content { width:100%; text-align:center; }
+.pair-row { display:grid; grid-template-columns:1fr 1fr; column-gap:180px; align-items:center; }
+.pair-option { width:100%; }
+.keyboard-reminder { position:fixed; bottom:20px; left:0; right:0; text-align:center; font-size:14px; font-weight:400; color:#777; pointer-events:none; padding:0 12px; }
+.word-label { font-size:42px; white-space:nowrap; color:#000!important; }
+.practice-question { position:fixed; top:12vh; left:50%; transform:translateX(-50%); width:min(1000px, calc(100vw - 48px)); font-size:24px; line-height:1.35; margin:0; text-align:center; color:#000!important; }
+.consent-option { font-weight:700!important; }
+.word-position { position:relative; }
+.fixation-placeholder { visibility:hidden; }
+.fixation-cross { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:42px; font-weight:400; color:#000!important; }
+.test-start-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.test-start-popup { max-width:calc(100vw - 48px); padding:24px 36px; border:1px solid #000; border-radius:12px; background:#fff; box-shadow:0 8px 28px rgba(0,0,0,0.12); font-size:28px; font-weight:bold; text-align:center; animation:test-start-dissolve 2200ms ease-in-out forwards; }
+@keyframes test-start-dissolve {
+  0% { opacity:0; }
+  15%, 65% { opacity:1; }
+  100% { opacity:0; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .test-start-popup { animation:none; }
+}
+</style>
+</head>
+
+<body><p id="loading-message" role="status">Loading questionnaire…</p></body>
+
+<script>
+
+// WORD BANKS
+// Edit practice_pairs.txt and actual_test_pairs.txt to change the pairs.
+// Each object is one indivisible pair: its words are never pooled with other pairs.
+// Load both UTF-8 text files before constructing or starting any trials.
+async function loadPairs(filename, isPractice) {
+  const response = await fetch(filename, { cache: "no-store" });
+  if (!response.ok) throw new Error(filename + ": HTTP " + response.status);
+  let pairs;
+  try {
+    pairs = JSON.parse((await response.text()).replace(/^\uFEFF/, ""));
+  } catch (error) {
+    throw new Error(filename + ": invalid JSON. Check quotation marks and commas.");
+  }
+  if (!Array.isArray(pairs) || pairs.length === 0) {
+    throw new Error(filename + ": must contain a nonempty array of pairs.");
+  }
+  // Reject duplicate IDs and invalid fields before a participant starts.
+  const ids = new Set();
+  const conditions = isPractice ? ["practice"] : ["matched_positive", "matched_negative", "mixed"];
+  pairs.forEach(function(pair, index) {
+    const label = filename + ", pair " + (index + 1) + ": ";
+    if (!pair || typeof pair !== "object" || Array.isArray(pair)) throw new Error(label + "expected an object.");
+    if (!((typeof pair.pair_id === "string" && pair.pair_id.trim()) ||
+          (typeof pair.pair_id === "number" && Number.isInteger(pair.pair_id) && pair.pair_id > 0))) {
+      throw new Error(label + "pair_id must be a nonempty string or positive integer.");
+    }
+    const id = String(pair.pair_id).trim();
+    if (ids.has(id)) throw new Error(label + "duplicate pair_id " + id);
+    ids.add(id);
+    ["word1", "word2"].forEach(function(key) {
+      if (typeof pair[key] !== "string" || !pair[key].trim() || pair[key] !== pair[key].trim()) {
+        throw new Error(label + key + " must contain text with no leading or trailing spaces.");
+      }
+    });
+    if (pair.word1 === pair.word2) throw new Error(label + "the two words must differ.");
+    if (!conditions.includes(pair.condition)) throw new Error(label + "invalid condition.");
+    if (pair.more_desirable === undefined) pair.more_desirable = "";
+    if (typeof pair.more_desirable !== "string" ||
+        (pair.more_desirable !== "" && ![pair.word1, pair.word2].includes(pair.more_desirable))) {
+      throw new Error(label + "more_desirable must be empty or exactly match one of the two words.");
+    }
+    if (pair.condition === "mixed" && !pair.more_desirable) {
+      throw new Error(label + "mixed pairs require more_desirable.");
+    }
+  });
+  return pairs;
+}
+
+// Words are displayed as text, even if an edited word includes HTML characters.
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, function(character) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+  });
+}
+
+// STARTUP
+// Wait for both files before building the timeline. Reloading the page creates
+// fresh random choices; no left/right assignments are saved between runs.
+async function startStudy() {
+  try {
+    if (window.location.protocol === "file:") {
+      throw new Error("Open this page through a web server (for example, http://localhost:8000), with both text files in the same folder.");
+    }
+    var [practiceStimuli, mainStimuli] = await Promise.all([
+      loadPairs("practice_pairs.txt", true),
+      loadPairs("actual_test_pairs.txt", false)
+    ]);
+// Read the participant code supplied in the website address, if present.
+function getUrlParam(param) {
+  var urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
+}
+
+var automatic_sona_id = getUrlParam("sona_id") || "";
+var return_url = "https://uteppsychology.az1.qualtrics.com/jfe/form/SV_6nxWdRPgkB7ftMG";
+
+// STUDY COMPLETION
+// Send only SONA ID, actual-test response times/chosen words, and follow-up answers.
+// Qualtrics must read this reduced payload; its own metadata settings are separate.
+var jsPsych = initJsPsych({
+  on_finish: function () {
+    // Do not export results or redirect someone who declined consent.
+    var consent = jsPsych.data.get().filter({ task: "consent" }).values()[0];
+    if (!consent || consent.consent !== "agree") return;
+    var main_data = jsPsych.data.get().filter({ task: "main_forced_choice" });
+    var trials = main_data.values();
+
+    function getSurveyValue(taskName, fieldName) {
+      var row = jsPsych.data.get().filter({ task: taskName }).values()[0] || {};
+      return row[fieldName] || "";
+    }
+
+    // Array order is the presentation order of actual-test questions.
+    // rt is milliseconds from pair appearance to S/K response (not fixation time).
+    // chosen_standardized is the actual word, resolved after left/right swapping.
+    // No practice responses, key presses, conditions, or pair IDs;
+    // scoring flags, or duplicate SONA fields are included in the outgoing data.
+    var payload = {
+      sona_id: getSurveyValue("sona_id_start", "sona_self_report_start").trim() || automatic_sona_id.trim(),
+      trials: trials.map(function(t) {
+        return {
+          rt: t.rt == null ? null : t.rt,
+          chosen_standardized: t.chosen_standardized || ""
+        };
+      }),
+      // Original follow-up answers only, including optional self-description fields.
+      imc: getSurveyValue("imc_question", "imc"),
+      english: getSurveyValue("english_question", "english"),
+      careless: getSurveyValue("careless_question", "careless"),
+      age: getSurveyValue("age_question", "age"),
+      gender: getSurveyValue("gender_question", "gender"),
+      gender_text: getSurveyValue("gender_question", "gender_text"),
+      year_school: getSurveyValue("year_school_question", "year_school"),
+      year_school_text: getSurveyValue("year_school_question", "year_school_text"),
+      ethnicity: getSurveyValue("ethnicity_question", "ethnicity"),
+      ethnicity_text: getSurveyValue("ethnicity_question", "ethnicity_text"),
+      hispanic: getSurveyValue("hispanic_question", "hispanic")
+    };
+
+    window.location.href = return_url + "#data=" + encodeURIComponent(JSON.stringify(payload));
+  }
+});
+
+// Trials and survey screens are appended here in their presentation order.
+var timeline = [];
+
+// Copy form answers into the trial record for the existing export code.
+function parseSurveyResponse(data) {
+  var response = data.response || {};
+  Object.keys(response).forEach(function(key) {
+    data[key] = response[key];
+  });
+}
+
+// WITHIN-PAIR RANDOMIZATION (used for BOTH practice and actual tests)
+// One independent coin flip per pair, per run:
+//   false -> word1 on the left (S), word2 on the right (K).
+//   true  -> word2 on the left (S), word1 on the right (K).
+// A 50/50 choice does not guarantee alternating sides or equal totals.
+// The source words, pair ID, condition, and scoring key remain together.
+// Return a new object so the original word-bank entry is not modified.
+function randomizePairSides(pair) {
+  var flip = Math.random() < 0.5;
+  return {
+    pair_id: pair.pair_id,
+    word1: pair.word1, // Canonical word1 for data analysis, regardless of screen side.
+    word2: pair.word2, // Canonical word2 for data analysis, regardless of screen side.
+    condition: pair.condition,
+    more_desirable: pair.more_desirable, // Scoring follows the word, not its position.
+    display_left: flip ? pair.word2 : pair.word1,
+    display_right: flip ? pair.word1 : pair.word2,
+    is_flipped: flip ? 1 : 0 // Exported flag: 1 = reversed, 0 = original arrangement.
+  };
+}
+
+
+// SHARED PAIR TRIAL
+// Both phases display the question above the word positions, including during fixation.
+const taskQuestion = 'Which personality adjective below is more desirable in someone applying for the Customer Service Representative job?';
+
+function makeTrial(item, taskLabel, isPractice) {
+  return {
+
+
+    type: jsPsychHtmlKeyboardResponse,
+
+    // S always selects the displayed LEFT word; K selects the displayed RIGHT word.
+    stimulus: `
+      <div class="practice-question">${taskQuestion}</div>
+      <div class="trial-wrapper"><div class="trial-content">
+
+
+        <div class="pair-row">
+          <div class="pair-option"><div class="word-label">${escapeHtml(item.display_left)}</div></div>
+          <div class="pair-option"><div class="word-label">${escapeHtml(item.display_right)}</div></div>
+        </div>
+      </div></div>
+      <div class="keyboard-reminder">“S” for left · “K” for right</div>
+    `,
+
+
+    // Accept only the two response keys; jsPsych records response time (rt).
+
+    choices: ["s", "k"],
+    data: {
+      task: taskLabel,
+      pair_id: item.pair_id,
+      condition: item.condition,
+      word1: item.word1,
+      word2: item.word2,
+      is_flipped: item.is_flipped
+    },
+    on_finish: function(data) {
+      // Resolve the pressed key against the randomized display, not word1/word2 order.
+      var chosen = data.response === "s" ? item.display_left : item.display_right;
+      
+
+      // Save the selected adjective itself so analysis is independent of screen position.
+
+      if (chosen === item.word1) data.chosen_standardized = item.word1;
+
+      else if (chosen === item.word2) data.chosen_standardized = item.word2;
+
+      else data.chosen_standardized = "";
+
+      // Only mixed pairs have a designated more-desirable answer in this study.
+      // Practice and matched pairs retain a blank score, as in the original code.
+      if (item.condition === "mixed") {
+        data.chose_more_desirable = chosen === item.more_desirable ? 1 : 0;
+      } else {
+        data.chose_more_desirable = "";
+      }
+    }
+  };
+}
+
+// Two crosses occupy the exact upcoming word positions for 500 ms.
+// Invisible words reserve identical layout dimensions; only the crosses are visible.
+function makeFixation(item, isPractice) {
+  return {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `
+      <div class="practice-question">${taskQuestion}</div>
+      <div class="trial-wrapper"><div class="trial-content">
+        <div class="pair-row">
+          <div class="pair-option word-position">
+            <div class="word-label fixation-placeholder" aria-hidden="true">${escapeHtml(item.display_left)}</div>
+            <div class="fixation-cross">+</div>
+          </div>
+          <div class="pair-option word-position">
+            <div class="word-label fixation-placeholder" aria-hidden="true">${escapeHtml(item.display_right)}</div>
+            <div class="fixation-cross">+</div>
+          </div>
+        </div>
+      </div></div>
+      <div class="keyboard-reminder">“S” for left · “K” for right</div>
+    `,
+    choices: "NO_KEYS",
+    trial_duration: 500
+  };
+}
+
+// CONSENT: present the original participant information and consent options.
+
+
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: {
+    task: "consent",
+    consent_version: "2026"
+  },
+
+  html: `
+    <div class="form-box">
+
+      <div class="form-title">
+        PARTICIPANT INFORMATION SHEET
+      </div>
+
+      <p><strong>Title of the Project:</strong>
+      Examining Response Latencies in Item Desirability Matching – Study 2</p>
+
+      <p><strong>Principal Investigator:</strong>
+      Goran Pavlov, PhD.</p>
+
+      <p><strong>UTEP Department:</strong>
+      Psychology</p>
+
+      <p>Greetings,</p>
+
+      <p>
+      xYou are invited to be part of a research study. This study is a part of 
+      a larger project exploring the relationship between human motivation, 
+      cognition, and behavior in work-related contexts. The purpose of the 
+      current study is to examine how efficient people are in identifying personality 
+      attributes that are more desirable in applicants for a specific job.  
+      </p>
+
+      <p>
+      If you agree to take part in this study, you will be asked to compare
+      ${mainStimuli.length} personality attribute pairs and, in each pair, identify the more
+      desirable attribute in a person applying for a Customer Service
+      Representative job. You will also provide your SONA identity code
+      and answer follow-up questions about
+      your responses and demographic information.
+      The study is fully administered online and can only be completed on
+      devices with a physical keyboard (a PC or a laptop). Completing the
+      study should take you about 20 minutes.
+      </p>
+
+      <p>
+      You will receive 1 SONA research participation credit for completing
+      the study. If you complete the study and correctly identify the more
+      desirable personality attribute in over 90% of attribute pairs, your
+      reward will double and you will be awarded 2 SONA research participation
+      credit in total. If you begin the study and later decide to withdraw,
+      there are other research credit opportunities available to satisfy your
+      research participation requirements.
+      </p>
+
+      <p>
+      Your participation is voluntary, and it is totally up to you to decide 
+      whether you want to participate. Even if you decide to be part of the 
+      study now, you may change your mind and stop at any time. Your participation,
+      non-participation (not consenting to participate), or withdrawal will not 
+      affect your grades or your relationship with your professors, college(s), or 
+      the University of Texas at El Paso.  
+      </p>
+
+      <p>
+      We will not collect your name, email address, IP address, or other 
+      identifying information beyond your SONA identity code. Your responses 
+      will be linked to your SONA identity code so that we can allocate research 
+      participation credits in the SONA system. After that, the identity codes 
+      will be removed from data files. Your research responses will be kept confidential.
+      </p>
+
+      <p>
+      The principal investigator will maintain a file of all documents relevant to their 
+      IRB-approved study for three years after the study is closed, after which data/files 
+      will be shredded or permanently deleted. If you have any questions, concerns, or 
+      complaints about this study now or in the future, you may contact the principal 
+      investigator (Dr. Goran Pavlov) through SONA’s messaging system and/or The University 
+      of Texas at El Paso Institutional Review Board at irb@utep.edu (phone: 915-747-6590).
+      </p>
+      
+
+      <p style="text-align:center; font-weight:bold; margin-top:30px;">
+      YOUR DILIGENT RESPONSES ARE VERY IMPORTANT TO OUR RESEARCH.
+      </p>
+
+      <p style="text-align:center; font-weight:bold;">
+      WE THANK YOU FOR TAKING TIME AND EFFORT TO HELP US!
+      </p>
+
+      <hr style="margin:30px 0;">
+
+      <p><strong>Contact Information</strong></p>
+
+      <p>
+      If you have any questions, concerns, or complaints about this research
+      now or in the future, you may contact the principal investigator,
+      Dr. Goran Pavlov at gpavlov@utep.edu.
+      </p>
+
+      <p>
+      If you have questions about your rights as a research participant, or
+      wish to obtain information, ask questions, or discuss any concerns about
+      this study with someone other than the researcher(s), please contact the following:
+      </p>
+
+      <p>
+      <strong>The University of Texas at El Paso Institutional Review Board</strong><br>
+      Phone: 915-747-6590<br>
+      Email: irb@utep.edu
+      </p>
+
+      <hr style="margin:30px 0;">
+
+      <p>
+      Please indicate whether you agree to participate in this research study.
+      </p>
+
+      <label class="option-line">
+        <input type="radio" name="consent" value="agree" required>
+        <strong class="consent-option" style="font-weight:700!important;">I Consent</strong>
+      </label>
+
+      <label class="option-line">
+        <input type="radio" name="consent" value="decline">
+        <strong class="consent-option" style="font-weight:700!important;">I Do Not Consent</strong>
+      </label>
+
+    </div>
+  `,
+
+  button_label: "Continue",
+
+  on_finish: function(data) {
+    parseSurveyResponse(data);
+
+    // Message shown to user in case the user does not conscent to taking the Test
+
+    if (data.consent !== "agree") {
+      jsPsych.abortExperiment(
+        '<div class="form-box">' +
+        '<div class="form-title">Thank You</div>' +
+        '<p>You have chosen not to participate in this research study.</p>' +
+        '<p>You may now close this window.</p>' +
+        '</div>'
+      );
+    }
+  }
+});
+
+//Instruction section (Window 2)
+
+timeline.push({
+  type: jsPsychInstructions,
+  pages: [`
+    <div class="instructions-box">
+      <div class="instructions-title">INSTRUCTIONS</div> ${mainStimuli.length}
+      <p>Each job requires a specific skill set but also specific personality attributes to be performed successfully. Accordingly, in choosing the best job candidate, hiring managers are often assessing if applicants possess the required, desirable personality attributes for the job they applied for.</p>
+      <p>In the following task, you will be presented with ${mainStimuli.length} pairs of adjectives reflecting various personality attributes. For each pair, identify the more desirable personality attribute in a person applying for a Customer Service Representative job. Please read a brief job description for this job carefully.</p>
+
+      
+      <div class="job-box"><div class="job-title">Customer Service Representative job description</div>
+      <p>Customer Service Representative is responsible for providing high-quality support to customers by addressing inquiries, resolving issues, and delivering accurate information about products and services. This role involves communicating with customers via phone, email, or chat, ensuring a positive and efficient customer experience.</p>
+      <p>Key responsibilities include identifying customer needs, troubleshooting problems, processing orders or requests, and escalating complex issues when necessary. The representative maintains detailed and accurate records of customer interactions and follows up to ensure resolution and satisfaction.</p></div>
+
+
+
+      <p>This task will take approximately 15 minutes. If you correctly identify the more desirable attribute in over 90% of the pairs, your reward will double and you will be awarded 2 SONA research participation credit in total. </p>
+      <p>The adjective pairs will appear on the screen one pair at a time, with one adjective to the left and one to the right. Use the “S” key on your keyboard to select the one on the left and the “K” key on your keyboard to select the one to the right.</p>
+      <p>Before you start the task, you will be presented with 3 practice pairs to familiarize yourself with the layout and get used to keyboard keys. </p>
+    </div>`],
+  show_clickable_nav: true,
+  allow_backward: false,
+  show_page_number: false,
+  button_label_next: "->"
+});
+
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "sona_id_start" },
+  // This participant screen deliberately contains exactly one input: SONA ID.
+  html: `
+    <div class="form-box">
+      <div class="form-title">SONA ID</div>
+      <div class="question-block">
+        <label class="question-title" for="sona-code">Please enter your SONA ID.</label><br>
+        <input id="sona-code" class="text-input" type="text" name="sona_self_report_start" pattern=".*\\S.*" required>
+      </div>
+    </div>
+  `,
+  button_label: "Continue",
+  on_finish: parseSurveyResponse
+});
+
+// Practice Test Word Bank (Window 3)
+
+// Practice entries come from the external text file.
+// practiceStimuli is loaded from practice_pairs.txt before the timeline is built.
+
+//
+
+// Preserve practice pair order while independently randomizing each pair's sides.
+practiceStimuli.map(randomizePairSides).forEach(function(item) {
+  timeline.push(makeFixation(item, true));
+  timeline.push(makeTrial(item, "practice_forced_choice", true));
+});
+
+// Brief automatic transition after practice. No click or key press is needed.
+// Keep this separate from word trials so the animation is excluded from response times.
+timeline.push({
+  type: jsPsychHtmlKeyboardResponse,
+  data: { task: "actual_test_reminder" },
+  stimulus: `
+    <div class="test-start-overlay">
+      <div class="test-start-popup" role="status">Actual test begins</div>
+    </div>`,
+  choices: "NO_KEYS",
+  trial_duration: 2200,
+  post_trial_gap: 0
+});
+
+// ACTUAL TEST: entries come from actual_test_pairs.txt.
+
+// mainStimuli is loaded from actual_test_pairs.txt before the timeline is built.
+
+// Two separate operations:
+// 1. map(randomizePairSides): independently swap the two words WITHIN each pair.
+// 2. shuffle(...): preserve the original study's random order of WHOLE pairs.
+// Neither operation transfers a word from one pair to another.
+jsPsych.randomization.shuffle(mainStimuli.map(randomizePairSides)).forEach(function(item) {
+  timeline.push(makeFixation(item, false));
+  timeline.push(makeTrial(item, "main_forced_choice", false));
+});
+
+//Final message after completing the First Test
+
+
+timeline.push({
+  type: jsPsychInstructions,
+  pages: [`
+    <div class="debrief-box">
+      <div class="debrief-title">DEBRIEF</div>
+      <p>Thank you for completing the task! </p>
+      <p>As mentioned at the beginning, the purpose of this study was to examine how efficient people are in identifying personality attributes that are more desirable in applicants for a specific job. You were presented with ${mainStimuli.length} pairs of personality attributes. Some of those pairs were mixed, composed of one undesirable and one desirable 
+        attribute for the target job (for instance, Reckless and Kind), and some pairs were matched, composed of attributes that were similar in desirability for the target job (for instance, Caring and Thorough). Our research hypothesis was that participants would identify the more desirable attribute more efficiently, using less time and 
+        effort, in mixed pairs than in matched pairs. </p>
+      <p>In mixed pairs, the more desirable option may be easier to distinguish, whereas in matched pairs the preferred option may be less clear and more open to individual interpretation. Accordingly, you will be awarded 2 SONA research participation credits for completing this study regardless of your choices.  </p>
+      <p>Please proceed and answer the 3 follow-up questions and the demographic questions to complete this study. </p>
+    </div>`],
+  show_clickable_nav: true,
+  allow_backward: false,
+  show_page_number: false,
+  button_label_next: "Proceed"
+});
+
+// Original data-quality and demographic questions, restored with their original wording.
+//Second Test Questions
+
+
+//Question 1
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "imc_question" },
+  html: `<div class="form-box"><div class="form-title">DATA QUALITY CHECKS</div><div class="question-block"><div class="question-title">1. Instructional manipulation check</div><p>Please mark the option below that best describes your choices of attributes:</p><p>I compared each attribute pair with respect to how desirable it would be to be possessed by an applicant for the job of:</p>
+  <label class="option-line"><input type="radio" name="imc" value="1" required> High School Teacher</label>
+  <label class="option-line"><input type="radio" name="imc" value="2"> Firefighter</label>
+  <label class="option-line"><input type="radio" name="imc" value="3"> Data Analyst</label>
+  <label class="option-line"><input type="radio" name="imc" value="4"> Customer Service Representative</label>
+  <label class="option-line"><input type="radio" name="imc" value="5"> Sales Representative</label></div></div>`,
+  button_label: "Next",
+  on_finish: parseSurveyResponse
+});
+
+
+//Question 2
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "english_question" },
+  html: `<div class="form-box"><div class="form-title">DATA QUALITY CHECKS</div><div class="question-block"><div class="question-title">2. English proficiency self-report</div><p>How would you rate your proficiency in understanding written English?</p>
+  <label class="option-line"><input type="radio" name="english" value="1" required> Low</label>
+  <label class="option-line"><input type="radio" name="english" value="2"> Moderate</label>
+  <label class="option-line"><input type="radio" name="english" value="3"> High</label></div></div>`,
+  button_label: "Next",
+  on_finish: parseSurveyResponse
+});
+
+
+//Question 3
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "careless_question" },
+  html: `<div class="form-box"><div class="form-title">DATA QUALITY CHECKS</div><div class="question-block"><div class="question-title">3. Self-report measure of careless/insufficient effort responding</div><p Results of our study will depend a lot on the quality of your responses. Is there any reason we should exclude your responses from our data analysis (e.g., you were being distracted while choosing the attributes; your computer was malfunctioning while completing the questionnaire; you did not put forth an effort in identifying more desirable attributes; you were selecting attributes at random, you were using AI to assist you with responses, etc….)?
+(You will receive 2 credits for this study no matter how you respond to this question)</p>
+  <label class="option-line"><input type="radio" name="careless" value="1" required> Yes – my responses SHOULD be thrown out</label>
+  <label class="option-line"><input type="radio" name="careless" value="2"> No – my survey responses SHOULD NOT be thrown out</label></div></div>`,
+  button_label: "Next",
+  on_finish: parseSurveyResponse
+});
+
+
+//Question 4 Title
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "age_question" },
+  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">How old are you?</div><input class="text-input" type="number" name="age" min="18" max="99" required></div></div>`,
+  button_label: "Next",
+  on_finish: parseSurveyResponse
+});
+
+//Question 4
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "gender_question" },
+  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">How do you describe yourself?</div>
+  <label class="option-line"><input type="radio" name="gender" value="1" required> Male</label>
+  <label class="option-line"><input type="radio" name="gender" value="2"> Female</label>
+  <label class="option-line"><input type="radio" name="gender" value="3"> Non-binary</label>
+  <label class="option-line"><input type="radio" name="gender" value="4"> Prefer to self-describe</label><input class="text-input" type="text" name="gender_text" placeholder="Optional self-description">
+  <label class="option-line"><input type="radio" name="gender" value="5"> Prefer not to say</label></div></div>`,
+  button_label: "Next",
+  on_finish: parseSurveyResponse
+});
+
+
+//Question 5
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "year_school_question" },
+  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">What year of school are you in?</div>
+  <label class="option-line"><input type="radio" name="year_school" value="1" required> Freshman</label>
+  <label class="option-line"><input type="radio" name="year_school" value="2"> Sophomore</label>
+  <label class="option-line"><input type="radio" name="year_school" value="3"> Junior</label>
+  <label class="option-line"><input type="radio" name="year_school" value="4"> Senior</label>
+  <label class="option-line"><input type="radio" name="year_school" value="5"> Prefer to self-describe</label><input class="text-input" type="text" name="year_school_text" placeholder="Optional self-description">
+  <label class="option-line"><input type="radio" name="year_school" value="6"> Prefer not to say</label></div></div>`,
+  button_label: "Next",
+  on_finish: parseSurveyResponse
+});
+
+
+//Question 6
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "ethnicity_question" },
+  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">What best describes your race?</div>
+  <label class="option-line"><input type="radio" name="ethnicity" value="1" required> American Indian / Alaskan Indian</label>
+  <label class="option-line"><input type="radio" name="ethnicity" value="2"> Native Hawaiian or Other Pacific Islander</label>
+  <label class="option-line"><input type="radio" name="ethnicity" value="3"> Black / African American</label>
+   <label class="option-line"><input type="radio" name="ethnicity" value="3"> Asian</label>
+  <label class="option-line"><input type="radio" name="ethnicity" value="4"> White / Caucasian</label>
+  <label class="option-line"><input type="radio" name="ethnicity" value="5"> Prefer to self-describe</label><input class="text-input" type="text" name="ethnicity_text" placeholder="Optional self-description">
+  <label class="option-line"><input type="radio" name="ethnicity" value="6"> Prefer not to say</label></div></div>`,
+  button_label: "Next",
+  on_finish: parseSurveyResponse
+});
+
+
+//Question 7
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "hispanic_question" },
+  html: `<div class="form-box"><div class="form-title">DEMOGRAPHIC QUESTIONS</div><div class="question-block"><div class="question-title">Are you Hispanic or Latino?</div>
+  <label class="option-line"><input type="radio" name="hispanic" value="1" required> Yes</label>
+  <label class="option-line"><input type="radio" name="hispanic" value="2"> No</label>
+  <label class="option-line"><input type="radio" name="hispanic" value="3"> Prefer not to say</label></div></div>`,
+  button_label: "FINISH",
+  on_finish: parseSurveyResponse
+});
+
+
+
+// Submit identity, actual-test choices/times, and follow-up answers.
+// The duplicate end-of-study SONA prompt is intentionally omitted.
+timeline.push({
+  type: jsPsychInstructions,
+  pages: [`<div class="instructions-box">
+    <div class="instructions-title">SUBMIT YOUR RESPONSES</div>
+    <p>You have completed the actual test and follow-up questions. Click Submit to continue to Qualtrics with your SONA identity code, the word selected and response time for each actual-test pair, and your follow-up answers.</p>
+    <p>Your practice responses are not included.</p>
+  </div>`],
+  show_clickable_nav: true,
+  allow_keys: false,
+  allow_backward: false,
+  show_page_number: false,
+  button_label_next: "Submit"
+});
+
+// All inputs are ready: remove the loading notice and begin the questionnaire.
+document.getElementById("loading-message").remove();
+jsPsych.run(timeline);
+  } catch (error) {
+    // Show loading/validation errors as plain text instead of starting an incomplete study.
+    const box = document.createElement("div");
+    box.className = "form-box";
+    const title = document.createElement("h1");
+    title.textContent = "The questionnaire could not start";
+    const message = document.createElement("p");
+    message.textContent = error.message;
+    box.append(title, message);
+    document.body.replaceChildren(box);
+    console.error(error);
+  }
+}
+startStudy();
+
+</script>
+
+</html>

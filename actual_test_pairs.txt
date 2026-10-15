@@ -1,0 +1,366 @@
+[
+  {
+    "pair_id": 1,
+    "word1": "Agreeable",
+    "word2": "Polished",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 2,
+    "word1": "Cooperative",
+    "word2": "Precise",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 3,
+    "word1": "Helpful",
+    "word2": "Efficient",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 4,
+    "word1": "Kind",
+    "word2": "Organized",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 5,
+    "word1": "Trustful",
+    "word2": "Neat",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 6,
+    "word1": "Patient",
+    "word2": "Consistent",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 7,
+    "word1": "Considerate",
+    "word2": "Lively",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 8,
+    "word1": "Sympathetic",
+    "word2": "Outgoing",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 9,
+    "word1": "Warm",
+    "word2": "Merry",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 10,
+    "word1": "Caring",
+    "word2": "Jolly",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 11,
+    "word1": "Gentle",
+    "word2": "Active",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 12,
+    "word1": "Responsible",
+    "word2": "Friendly",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 13,
+    "word1": "Thorough",
+    "word2": "Calm",
+    "condition": "matched_positive",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 14,
+    "word1": "Harsh",
+    "word2": "Careless",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 15,
+    "word1": "Rude",
+    "word2": "Unreliable",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 16,
+    "word1": "Hostile",
+    "word2": "Inconsistent",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 17,
+    "word1": "Revengeful",
+    "word2": "Negligent",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 18,
+    "word1": "Cold",
+    "word2": "Envious",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 19,
+    "word1": "Antagonistic",
+    "word2": "Irritable",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 20,
+    "word1": "Ruthless",
+    "word2": "Moody",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 21,
+    "word1": "Spiteful",
+    "word2": "Weepy",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 22,
+    "word1": "Inefficient",
+    "word2": "Jealous",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 23,
+    "word1": "Impulsive",
+    "word2": "Insecure",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 24,
+    "word1": "Introverted",
+    "word2": "Anxious",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 25,
+    "word1": "Shy",
+    "word2": "Nervous",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 26,
+    "word1": "Withdrawn",
+    "word2": "Tense",
+    "condition": "matched_negative",
+    "more_desirable": ""
+  },
+  {
+    "pair_id": 27,
+    "word1": "Agreeable",
+    "word2": "Tense",
+    "condition": "mixed",
+    "more_desirable": "Agreeable"
+  },
+  {
+    "pair_id": 28,
+    "word1": "Cooperative",
+    "word2": "Nervous",
+    "condition": "mixed",
+    "more_desirable": "Cooperative"
+  },
+  {
+    "pair_id": 29,
+    "word1": "Helpful",
+    "word2": "Anxious",
+    "condition": "mixed",
+    "more_desirable": "Helpful"
+  },
+  {
+    "pair_id": 30,
+    "word1": "Kind",
+    "word2": "Insecure",
+    "condition": "mixed",
+    "more_desirable": "Kind"
+  },
+  {
+    "pair_id": 31,
+    "word1": "Trustful",
+    "word2": "Jealous",
+    "condition": "mixed",
+    "more_desirable": "Trustful"
+  },
+  {
+    "pair_id": 32,
+    "word1": "Patient",
+    "word2": "Weepy",
+    "condition": "mixed",
+    "more_desirable": "Patient"
+  },
+  {
+    "pair_id": 33,
+    "word1": "Considerate",
+    "word2": "Moody",
+    "condition": "mixed",
+    "more_desirable": "Considerate"
+  },
+  {
+    "pair_id": 34,
+    "word1": "Sympathetic",
+    "word2": "Irritable",
+    "condition": "mixed",
+    "more_desirable": "Sympathetic"
+  },
+  {
+    "pair_id": 35,
+    "word1": "Warm",
+    "word2": "Envious",
+    "condition": "mixed",
+    "more_desirable": "Warm"
+  },
+  {
+    "pair_id": 36,
+    "word1": "Caring",
+    "word2": "Negligent",
+    "condition": "mixed",
+    "more_desirable": "Caring"
+  },
+  {
+    "pair_id": 37,
+    "word1": "Gentle",
+    "word2": "Inconsistent",
+    "condition": "mixed",
+    "more_desirable": "Gentle"
+  },
+  {
+    "pair_id": 38,
+    "word1": "Responsible",
+    "word2": "Unreliable",
+    "condition": "mixed",
+    "more_desirable": "Responsible"
+  },
+  {
+    "pair_id": 39,
+    "word1": "Thorough",
+    "word2": "Careless",
+    "condition": "mixed",
+    "more_desirable": "Thorough"
+  },
+  {
+    "pair_id": 40,
+    "word1": "Harsh",
+    "word2": "Calm",
+    "condition": "mixed",
+    "more_desirable": "Calm"
+  },
+  {
+    "pair_id": 41,
+    "word1": "Rude",
+    "word2": "Friendly",
+    "condition": "mixed",
+    "more_desirable": "Friendly"
+  },
+  {
+    "pair_id": 42,
+    "word1": "Hostile",
+    "word2": "Active",
+    "condition": "mixed",
+    "more_desirable": "Active"
+  },
+  {
+    "pair_id": 43,
+    "word1": "Revengeful",
+    "word2": "Jolly",
+    "condition": "mixed",
+    "more_desirable": "Jolly"
+  },
+  {
+    "pair_id": 44,
+    "word1": "Cold",
+    "word2": "Merry",
+    "condition": "mixed",
+    "more_desirable": "Merry"
+  },
+  {
+    "pair_id": 45,
+    "word1": "Antagonistic",
+    "word2": "Outgoing",
+    "condition": "mixed",
+    "more_desirable": "Outgoing"
+  },
+  {
+    "pair_id": 46,
+    "word1": "Ruthless",
+    "word2": "Lively",
+    "condition": "mixed",
+    "more_desirable": "Lively"
+  },
+  {
+    "pair_id": 47,
+    "word1": "Spiteful",
+    "word2": "Consistent",
+    "condition": "mixed",
+    "more_desirable": "Consistent"
+  },
+  {
+    "pair_id": 48,
+    "word1": "Inefficient",
+    "word2": "Neat",
+    "condition": "mixed",
+    "more_desirable": "Neat"
+  },
+  {
+    "pair_id": 49,
+    "word1": "Impulsive",
+    "word2": "Organized",
+    "condition": "mixed",
+    "more_desirable": "Organized"
+  },
+  {
+    "pair_id": 50,
+    "word1": "Introverted",
+    "word2": "Efficient",
+    "condition": "mixed",
+    "more_desirable": "Efficient"
+  },
+  {
+    "pair_id": 51,
+    "word1": "Shy",
+    "word2": "Precise",
+    "condition": "mixed",
+    "more_desirable": "Precise"
+  },
+  {
+    "pair_id": 52,
+    "word1": "Withdrawn",
+    "word2": "Polished",
+    "condition": "mixed",
+    "more_desirable": "Polished"
+  }
+]
