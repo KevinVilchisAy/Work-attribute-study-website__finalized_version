@@ -461,7 +461,9 @@ timeline.push({
   show_clickable_nav: true,
   allow_backward: false,
   show_page_number: false,
-  button_label_next: "Continue"
+  on_load: function() {
+  document.getElementById("jspsych-instructions-next").textContent = "Continue";
+}
 });
 
 timeline.push({
