@@ -461,9 +461,11 @@ timeline.push({
   show_clickable_nav: true,
   allow_backward: false,
   show_page_number: false,
+  button_label_next: "Continue",
   on_load: function() {
-  document.getElementById("jspsych-instructions-next").textContent = "Continue";
-}
+    // The instructions plugin adds an arrow; keep this button label plain.
+    document.getElementById("jspsych-instructions-next").textContent = "Continue";
+  }
 });
 
 timeline.push({
@@ -490,8 +492,8 @@ timeline.push({
 
 //
 
-// Preserve practice pair order while independently randomizing each pair's sides.
-practiceStimuli.map(randomizePairSides).forEach(function(item) {
+// Randomize whole practice-pair order and independently randomize each pair's sides.
+jsPsych.randomization.shuffle(practiceStimuli.map(randomizePairSides)).forEach(function(item) {
   timeline.push(makeFixation(item, true));
   timeline.push(makeTrial(item, "practice_forced_choice", true));
 });
