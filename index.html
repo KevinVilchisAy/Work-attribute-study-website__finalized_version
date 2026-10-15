@@ -34,16 +34,6 @@ button,.jspsych-btn { background:#fff!important; color:#000!important; border:1p
 .word-position { position:relative; }
 .fixation-placeholder { visibility:hidden; }
 .fixation-cross { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:42px; font-weight:400; color:#000!important; }
-.test-start-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
-.test-start-popup { max-width:calc(100vw - 48px); padding:24px 36px; border:1px solid #000; border-radius:12px; background:#fff; box-shadow:0 8px 28px rgba(0,0,0,0.12); font-size:28px; font-weight:bold; text-align:center; animation:test-start-dissolve 2200ms ease-in-out forwards; }
-@keyframes test-start-dissolve {
-  0% { opacity:0; }
-  15%, 65% { opacity:1; }
-  100% { opacity:0; }
-}
-@media (prefers-reduced-motion:reduce) {
-  .test-start-popup { animation:none; }
-}
 </style>
 </head>
 
@@ -326,7 +316,7 @@ timeline.push({
       <p>Greetings,</p>
 
       <p>
-      xYou are invited to be part of a research study. This study is a part of 
+      You are invited to be part of a research study. This study is a part of 
       a larger project exploring the relationship between human motivation, 
       cognition, and behavior in work-related contexts. The purpose of the 
       current study is to examine how efficient people are in identifying personality 
@@ -456,7 +446,7 @@ timeline.push({
   type: jsPsychInstructions,
   pages: [`
     <div class="instructions-box">
-      <div class="instructions-title">INSTRUCTIONS</div> ${mainStimuli.length}
+      <div class="instructions-title">INSTRUCTIONS</div> 
       <p>Each job requires a specific skill set but also specific personality attributes to be performed successfully. Accordingly, in choosing the best job candidate, hiring managers are often assessing if applicants possess the required, desirable personality attributes for the job they applied for.</p>
       <p>In the following task, you will be presented with ${mainStimuli.length} pairs of adjectives reflecting various personality attributes. For each pair, identify the more desirable personality attribute in a person applying for a Customer Service Representative job. Please read a brief job description for this job carefully.</p>
 
@@ -474,7 +464,7 @@ timeline.push({
   show_clickable_nav: true,
   allow_backward: false,
   show_page_number: false,
-  button_label_next: "->"
+  button_label_next: "Continue"
 });
 
 timeline.push({
@@ -507,17 +497,17 @@ practiceStimuli.map(randomizePairSides).forEach(function(item) {
   timeline.push(makeTrial(item, "practice_forced_choice", true));
 });
 
-// Brief automatic transition after practice. No click or key press is needed.
-// Keep this separate from word trials so the animation is excluded from response times.
+// A separate screen waits for the space bar before the actual test begins.
 timeline.push({
   type: jsPsychHtmlKeyboardResponse,
   data: { task: "actual_test_reminder" },
   stimulus: `
-    <div class="test-start-overlay">
-      <div class="test-start-popup" role="status">Actual test begins</div>
+    <div class="instructions-box">
+      <div class="instructions-title">ACTUAL TEST</div>
+      <p style="text-align:center;">Now the actual test will begin. Please press the space bar to continue.</p>
     </div>`,
-  choices: "NO_KEYS",
-  trial_duration: 2200,
+  choices: [" "],
+  response_ends_trial: true,
   post_trial_gap: 0
 });
 
