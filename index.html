@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> 
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Desirable Attributes at Work</title>
@@ -151,14 +151,14 @@ var jsPsych = initJsPsych({
       imc: getSurveyValue("followup_questionnaire", "imc"),
       english: getSurveyValue("followup_questionnaire", "english"),
       careless: getSurveyValue("followup_questionnaire", "careless"),
-      age: getSurveyValue("followup_questionnaire", "age"),
-      gender: getSurveyValue("followup_questionnaire", "gender"),
-      gender_text: getSurveyValue("followup_questionnaire", "gender_text"),
-      year_school: getSurveyValue("followup_questionnaire", "year_school"),
-      year_school_text: getSurveyValue("followup_questionnaire", "year_school_text"),
-      ethnicity: getSurveyValue("followup_questionnaire", "ethnicity"),
-      ethnicity_text: getSurveyValue("followup_questionnaire", "ethnicity_text"),
-      hispanic: getSurveyValue("followup_questionnaire", "hispanic")
+      age: getSurveyValue("demographic_questionnaire", "age"),
+      gender: getSurveyValue("demographic_questionnaire", "gender"),
+      gender_text: getSurveyValue("demographic_questionnaire", "gender_text"),
+      year_school: getSurveyValue("demographic_questionnaire", "year_school"),
+      year_school_text: getSurveyValue("demographic_questionnaire", "year_school_text"),
+      ethnicity: getSurveyValue("demographic_questionnaire", "ethnicity"),
+      ethnicity_text: getSurveyValue("demographic_questionnaire", "ethnicity_text"),
+      hispanic: getSurveyValue("demographic_questionnaire", "hispanic")
     };
 
     window.location.href = return_url + "#data=" + encodeURIComponent(JSON.stringify(payload));
@@ -495,7 +495,6 @@ timeline.push({
   type: jsPsychInstructions,
   pages: [`
     <div class="debrief-box">
-      <div class="debrief-title">DEBRIEF</div>
       <p>Thank you for completing the task! </p>
       <p>As mentioned at the beginning, the purpose of this study was to examine how efficient people are in identifying personality attributes that are more desirable in applicants for a specific job. You were presented with ${mainStimuli.length} pairs of personality attributes. Some of those pairs were mixed, composed of one undesirable and one desirable 
         attribute for the target job (for instance, Reckless and Kind), and some pairs were matched, composed of attributes that were similar in desirability for the target job (for instance, Caring and Thorough). Our research hypothesis was that participants would identify the more desirable attribute more efficiently, using less time and 
@@ -509,7 +508,7 @@ timeline.push({
   button_label_next: "Proceed"
 });
 
-// All follow-up and demographic questions share one page.
+// Follow-up questions, then demographics on a separate screen.
 timeline.push({
   type: jsPsychSurveyHtmlForm,
   data: { task: "followup_questionnaire" },
@@ -529,7 +528,17 @@ timeline.push({
 (You will receive 2 credits for this study no matter how you respond to this question)</p>
   <label class="option-line"><input type="radio" name="careless" value="1" required> Yes – my responses SHOULD be thrown out</label>
   <label class="option-line"><input type="radio" name="careless" value="2"> No – my survey responses SHOULD NOT be thrown out</label></div>
-<h2>DEMOGRAPHIC QUESTIONS</h2>
+  </div>`,
+  button_label: "Continue",
+  on_finish: parseSurveyResponse
+});
+
+// Demographic questionnaire.
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "demographic_questionnaire" },
+  html: `<div class="form-box" style="padding-left:20px;padding-right:20px;">
+    <div class="form-title">DEMOGRAPHIC QUESTIONS</div>
 <div class="question-block"><div class="question-title">How old are you?</div><input class="text-input" type="number" name="age" min="18" max="99" required></div>
 <div class="question-block"><div class="question-title">How do you describe yourself?</div>
   <label class="option-line"><input type="radio" name="gender" value="1" required> Male</label>
@@ -557,24 +566,20 @@ timeline.push({
   <label class="option-line"><input type="radio" name="hispanic" value="2"> No</label>
   <label class="option-line"><input type="radio" name="hispanic" value="3"> Prefer not to say</label></div>
   </div>`,
-  button_label: "Continue",
+  button_label: "FINISH",
   on_finish: parseSurveyResponse
 });
 
-// Submit identity, actual-test choices/times, and follow-up answers.
-// The duplicate end-of-study SONA prompt is intentionally omitted.
+// Final screen: no button or participant input; redirect through on_finish.
 timeline.push({
-  type: jsPsychInstructions,
-  pages: [`<div class="instructions-box">
-    <div class="instructions-title">SUBMIT YOUR RESPONSES</div>
-    <p>You have completed the actual test and follow-up questions. Click Submit to continue to Qualtrics with your SONA identity code, the word selected and response time for each actual-test pair, and your follow-up answers.</p>
-    <p>Your practice responses are not included.</p>
-  </div>`],
-  show_clickable_nav: true,
-  allow_keys: false,
-  allow_backward: false,
-  show_page_number: false,
-  button_label_next: "Submit"
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<div class="instructions-box">
+    <div class="instructions-title">Thank You For Completing the Test!</div>
+    <p style="text-align:center;">You will be redirected automatically.</p>
+  </div>`,
+  choices: "NO_KEYS",
+  trial_duration: 2500,
+  post_trial_gap: 0
 });
 
 // All inputs are ready: remove the loading notice and begin the questionnaire.
