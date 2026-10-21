@@ -425,6 +425,23 @@ timeline.push({
   }
 });
 
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  data: { task: "sona_id_start" },
+  // This participant screen deliberately contains exactly one input: SONA ID.
+  html: `
+    <div class="form-box">
+      <div class="form-title">SONA ID</div>
+      <div class="question-block">
+        <label class="question-title" for="sona-code">Please enter your SONA ID.</label><br>
+        <input id="sona-code" class="text-input" type="text" name="sona_self_report_start" pattern=".*\\S.*" required>
+      </div>
+    </div>
+  `,
+  button_label: "Continue",
+  on_finish: parseSurveyResponse
+});
+
 //Instruction section (Window 2)
 
 timeline.push({
@@ -454,23 +471,6 @@ timeline.push({
     // The instructions plugin adds an arrow; keep this button label plain.
     document.getElementById("jspsych-instructions-next").textContent = "Continue";
   }
-});
-
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  data: { task: "sona_id_start" },
-  // This participant screen deliberately contains exactly one input: SONA ID.
-  html: `
-    <div class="form-box">
-      <div class="form-title">SONA ID</div>
-      <div class="question-block">
-        <label class="question-title" for="sona-code">Please enter your SONA ID.</label><br>
-        <input id="sona-code" class="text-input" type="text" name="sona_self_report_start" pattern=".*\\S.*" required>
-      </div>
-    </div>
-  `,
-  button_label: "Continue",
-  on_finish: parseSurveyResponse
 });
 
 // Practice Test Word Bank (Window 3)
