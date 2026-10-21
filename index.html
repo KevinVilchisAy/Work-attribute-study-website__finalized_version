@@ -467,10 +467,8 @@ timeline.push({
   type: jsPsychHtmlKeyboardResponse,
   data: { task: "actual_test_reminder" },
   stimulus: `
-    <div class="instructions-box">
-      <p style="text-align: center;">
-        Please press the space bar to begin the Test.
-      </p>
+    <div style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center;">
+      <p>Please press the space bar to begin the Test.</p>
     </div>
   `,
   choices: [" "],
