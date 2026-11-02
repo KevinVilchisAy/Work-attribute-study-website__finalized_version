@@ -23,6 +23,7 @@ button,.jspsych-btn { background:#fff!important; color:#000!important; border:1p
 .job-title,.question-title { font-weight:bold; margin-bottom:10px; }
 .question-block { margin-bottom:28px; }
 .option-line { display:block; margin:8px 0; }
+.text-input:disabled { background:#eee; color:#777; cursor:not-allowed; }
 .text-input { width:320px; padding:6px; border:1px solid #000; font-size:16px; }
 .trial-wrapper { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:1000px; text-align:center; }
 .trial-content { width:100%; text-align:center; }
@@ -173,6 +174,46 @@ function parseSurveyResponse(data) {
   var response = data.response || {};
   Object.keys(response).forEach(function(key) {
     data[key] = response[key];
+  });
+}
+
+// Keep fixed-choice answers exclusive with optional self-description text.
+var selfDescriptionGroups = [
+  { radio: "gender", text: "gender_text", other: "4" },
+  { radio: "ethnicity", text: "ethnicity_text", other: "5" }
+];
+
+function setupSelfDescriptions() {
+  selfDescriptionGroups.forEach(function(group) {
+    var text = document.querySelector('input[name="' + group.text + '"]');
+    var radios = Array.from(document.querySelectorAll('input[type="radio"][name="' + group.radio + '"]'));
+    var other = radios.find(function(radio) { return radio.value === group.other; });
+    function updateTextAvailability() {
+      var selected = radios.find(function(radio) { return radio.checked; });
+      var fixedChoice = selected && selected.value !== group.other;
+      if (fixedChoice) text.value = "";
+      text.disabled = Boolean(fixedChoice);
+    }
+    radios.forEach(function(radio) {
+      radio.addEventListener("change", updateTextAvailability);
+    });
+    text.addEventListener("input", function() {
+      if (text.value.trim()) {
+        radios.forEach(function(radio) { radio.checked = radio === other; });
+        updateTextAvailability();
+      }
+    });
+    updateTextAvailability();
+  });
+}
+
+function finishDemographics(data) {
+  parseSurveyResponse(data);
+  selfDescriptionGroups.forEach(function(group) {
+    if (data[group.radio] !== group.other) {
+      data[group.text] = "";
+      if (data.response) data.response[group.text] = "";
+    }
   });
 }
 
@@ -555,7 +596,8 @@ timeline.push({
   <label class="option-line"><input type="radio" name="hispanic" value="3"> Prefer not to say</label></div>
   </div>`,
   button_label: "FINISH",
-  on_finish: parseSurveyResponse
+  on_load: setupSelfDescriptions,
+  on_finish: finishDemographics
 });
 
 // Final screen: no button or participant input; redirect through on_finish.
