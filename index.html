@@ -136,15 +136,15 @@ var jsPsych = initJsPsych({
 
     // Array order is the presentation order of actual-test questions.
     // rt is milliseconds from pair appearance to S/K response (not fixation time).
-    // chosen_standardized is the actual word, resolved after left/right swapping.
-    // No practice responses, key presses, conditions, or pair IDs;
-    // scoring flags, or duplicate SONA fields are included in the outgoing data.
+    // Each trial exports only rt, the original pair ID, and the selected word.
+    // Practice responses, key presses, conditions, and desirability scores are excluded.
     var payload = {
       sona_id: getSurveyValue("sona_id_start", "sona_self_report_start").trim() || automatic_sona_id.trim(),
       trials: trials.map(function(t) {
         return {
           rt: t.rt == null ? null : t.rt,
-          chosen_standardized: t.chosen_standardized || ""
+          id: t.pair_id,
+          word: t.word || ""
         };
       }),
       // Original follow-up answers only, including optional self-description fields.
@@ -239,21 +239,8 @@ function makeTrial(item, taskLabel, isPractice) {
       var chosen = data.response === "s" ? item.display_left : item.display_right;
       
 
-      // Save the selected adjective itself so analysis is independent of screen position.
-
-      if (chosen === item.word1) data.chosen_standardized = item.word1;
-
-      else if (chosen === item.word2) data.chosen_standardized = item.word2;
-
-      else data.chosen_standardized = "";
-
-      // Only mixed pairs have a designated more-desirable answer in this study.
-      // Practice and matched pairs retain a blank score, as in the original code.
-      if (item.condition === "mixed") {
-        data.chose_more_desirable = chosen === item.more_desirable ? 1 : 0;
-      } else {
-        data.chose_more_desirable = "";
-      }
+      // Record the selected word without computing a desirability score.
+      data.word = [item.word1, item.word2].includes(chosen) ? chosen : "";
     }
   };
 }
