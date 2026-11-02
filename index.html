@@ -348,9 +348,10 @@ timeline.push({
       study should take you about 20 minutes.
       </p>
 
-      <p>
-      You will receive 1 SONA research participation credit for completing
-      the study. If you complete the study and correctly identify the more
+      <p style="font-size: 14px;">
+      This study can only be taken once, and you will receive 1 SONA research 
+      participation credit for completing it.
+      If you complete the study and correctly identify the more
       desirable personality attribute in over 90% of attribute pairs, your
       reward will double and you will be awarded 2 SONA research participation
       credit in total. If you begin the study and later decide to withdraw,
@@ -369,32 +370,19 @@ timeline.push({
 
       <p>
       We will not collect your name, email address, IP address, or other identifying 
-      information beyond your SONA identity code. Your responses will be linked to your 
-      SONA identity code so that we can allocate research participation credits in the SONA 
-      system. After that, the identity codes will be removed from data files. Your research 
-      responses will be kept confidential. 
+      information beyond your SONA identity code. Your responses will be linked to 
+      your SONA identity code so that we can allocate research participation credits 
+      in the SONA system. After that, the identity codes will be removed from data files. 
+      Your research responses will be kept confidential.  
       </p>
 
       <p>
-      The principal investigator will maintain a file of all documents relevant to their IRB-approved 
-      study for three years after the study is closed, after which data/files will be shredded or 
-      permanently deleted. If you have any questions, concerns, or complaints about this study now or 
-      in the future, you may contact the principal investigator (Dr. Goran Pavlov) through SONA’s messaging 
-      system and/or The University of Texas at El Paso Institutional Review Board at irb@utep.edu (phone: 915-747-6590). 
-      </p>
-      
-
-      <p style="text-align:center; font-weight:bold; margin-top:30px;">
-      YOUR DILIGENT RESPONSES ARE VERY IMPORTANT TO OUR RESEARCH.
-      </p>
-
-      <p style="text-align:center; font-weight:bold;">
-      WE THANK YOU FOR TAKING TIME AND EFFORT TO HELP US!
-      </p>
-
-      
-      <p>
-      Please indicate whether you agree to participate in this research study.
+      The principal investigator will maintain a file of all documents relevant to their 
+      IRB-approved study for three years after the study is closed, after which data/files 
+      will be shredded or permanently deleted. If you have any questions, concerns, or 
+      complaints about this study now or in the future, you may contact the principal 
+      investigator (Dr. Goran Pavlov) through SONA’s messaging system and/or The University 
+      of Texas at El Paso Institutional Review Board at irb@utep.edu (phone: 915-747-6590). 
       </p>
 
       <label class="option-line">
@@ -485,7 +473,7 @@ timeline.push({
 //
 
 // Randomize whole practice-pair order and independently randomize each pair's sides.
-jsPsych.randomization.shuffle(practiceStimuli.map(randomizePairSides)).forEach(function(item) {
+practiceStimuli.map(randomizePairSides).forEach(function(item) {
   timeline.push(makeFixation(item, true));
   timeline.push(makeTrial(item, "practice_forced_choice", true));
 });
