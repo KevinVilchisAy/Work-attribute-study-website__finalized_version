@@ -1,22 +1,22 @@
 [
   {
     "pair_id": "P1",
-    "word1": "Kind",
-    "word2": "Reckless",
+    "word1": "Generous",
+    "word2": "Jealous",
     "condition": "practice",
     "more_desirable": ""
   },
   {
     "pair_id": "P2",
-    "word1": "Caring",
-    "word2": "Thorough",
+    "word1": "Sympathetic",
+    "word2": "Careful",
     "condition": "practice",
     "more_desirable": ""
   },
   {
     "pair_id": "P3",
-    "word1": "Harsh",
-    "word2": "Careless",
+    "word1": "Spiteful",
+    "word2": "Moody",
     "condition": "practice",
     "more_desirable": ""
   }
